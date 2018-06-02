@@ -10,7 +10,7 @@ add_executable(my_big_integer_testing
         big_integer.h
                gtest/gtest-all.cc
                gtest/gtest.h
-               gtest/gtest_main.cc my_vector.h my_vector.cpp)
+               gtest/gtest_main.cc)
 
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
