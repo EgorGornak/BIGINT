@@ -12,13 +12,13 @@ void big_integer::normalize() {
     }
 }
 
-big_integer::big_integer() : v(1, 0), sign(false) {}
+big_integer::big_integer() : sign(false), v(1, 0) {}
 
-big_integer::big_integer(uint32_t a) : v(1, a), sign(false) {}
+big_integer::big_integer(uint32_t a) : sign(false), v(1, a) {}
 
 big_integer::big_integer(int a) {
     if (a == INT_MIN) {
-        v.push_back(2147483648);
+        v.push_back(1u << 31u);
         sign = true;
         return;
     }
@@ -194,7 +194,7 @@ big_integer addition(big_integer a) {
     if (!a.sign) {
         return a;
     }
-    for (int i = 0; i < a.length(); i++) {
+    for (size_t i = 0; i < a.length(); i++) {
         a.v[i] = ~a.v[i];
     }
     return a;
@@ -271,7 +271,6 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
     sign = false;
     big_integer second = rhs;
     second.sign = false;
-
     uint64_t base = (1ll << 32);
     uint32_t normalize_coeff = static_cast<uint32_t>(base / (static_cast<uint64_t >(second.v.back() + 1)));
     *this *= normalize_coeff;
@@ -288,7 +287,7 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
     }
 
     for (int j = m - 1; j >= 0; j--) {
-        uint64_t q_star = (uint64_t(get(*this, n + j)) * base + get(*this,n + j - 1)) / second.v[n - 1];
+        uint64_t q_star = (uint64_t(get(*this, n + j)) * base + get(*this, n + j - 1)) / second.v[n - 1];
         if (q_star > base - 1) {
             q_star = base - 1;
         }
@@ -376,7 +375,7 @@ big_integer &big_integer::operator++() {
     return *this;
 }
 
-big_integer big_integer::operator++(int) {
+const big_integer big_integer::operator++(int) {
     big_integer tmp = *this;
     (*this) += 1;
     return tmp;
@@ -387,22 +386,22 @@ big_integer &big_integer::operator--() {
     return *this;
 }
 
-big_integer big_integer::operator--(int) {
+const big_integer big_integer::operator--(int) {
     big_integer tmp = *this;
     (*this) -= 1;
     return tmp;
 }
 
 big_integer &big_integer::operator&=(big_integer const &rhs) {
-    return bitOperation(*this, rhs, std::bit_and<uint32_t>());
+    return bitOperation(*this, rhs, std::bit_and<>());
 }
 
 big_integer &big_integer::operator|=(big_integer const &rhs) {
-    return bitOperation(*this, rhs, std::bit_or<uint32_t>());
+    return bitOperation(*this, rhs, std::bit_or<>());
 }
 
 big_integer &big_integer::operator^=(big_integer const &rhs) {
-    return bitOperation(*this, rhs, std::bit_xor<uint32_t>());
+    return bitOperation(*this, rhs, std::bit_xor<>());
 }
 
 big_integer big_integer::operator~() const {
@@ -415,7 +414,6 @@ big_integer &big_integer::operator<<=(int rhs) {
     blocks.reserve(blocks.size() + v.size());
     blocks.insert(blocks.end(), v.begin(), v.end());
     v = blocks;
-
     rhs %= 32;
     if (rhs) {
         uint32_t lastElement = v.back() >> (32 - rhs);
@@ -507,7 +505,7 @@ big_integer &big_integer::operator/=(int b) {
     return *this = smallDiv(*this, b);
 }
 
-uint32_t get(big_integer &a, int pos) {
+uint32_t get(big_integer &a, size_t pos) {
     if (pos >= a.v.size()) {
         return 0;
     } else {

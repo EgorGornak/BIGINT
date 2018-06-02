@@ -29,11 +29,10 @@ public:
     big_integer &operator<<=(int rhs);
     big_integer &operator>>=(int rhs);
 
-
     big_integer& operator++();
-    big_integer operator++(int);
+    const big_integer operator++(int);
     big_integer& operator--();
-    big_integer operator--(int);
+    const big_integer operator--(int);
 
     big_integer operator+() const;
     big_integer operator-() const;
@@ -53,7 +52,7 @@ private:
 
     size_t length() const;
     void normalize();
-    friend uint32_t get(big_integer &a, int pos);
+    friend uint32_t get(big_integer &a, size_t pos);
     friend big_integer addition(big_integer a);
     friend big_integer smallDiv(big_integer a, int b);
     friend int compare(big_integer const& a, big_integer const& b);
