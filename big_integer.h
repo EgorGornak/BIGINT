@@ -55,6 +55,7 @@ private:
     friend uint32_t get(big_integer &a, size_t pos);
     friend big_integer addition(big_integer a);
     friend big_integer smallDiv(big_integer a, int b);
+    friend void smallMul(big_integer &a, uint32_t b);
     friend int compare(big_integer const& a, big_integer const& b);
     friend int compare_absolute_value(big_integer const& a, big_integer const& b);
     big_integer& add(big_integer &first, big_integer const &second, bool flag);
