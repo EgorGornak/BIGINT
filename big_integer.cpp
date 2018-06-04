@@ -47,36 +47,15 @@ size_t big_integer::length() const {
 }
 
 void summOverflow(uint32_t &first, uint32_t const second, bool &carry) {
-    if (first > UINT32_MAX - second) {
-        first += second;
-        first += carry;
-        carry = true;
-    } else {
-        first += second;
-        if (first > UINT32_MAX - carry) {
-            first += carry;
-            carry = true;
-        } else {
-            first += carry;
-            carry = false;
-        }
-    }
+    uint64_t summ = (uint64_t)first + second + carry;
+    first = (uint32_t)summ;
+    carry = summ >> 32u;
 }
 
 void subOverflow(uint32_t &first, uint32_t const second, bool &carry) {
-    if (first < second) {
-        first = UINT32_MAX - second + first - carry + 1;
-        carry = true;
-    } else {
-        first -= second;
-        if (first < carry) {
-            first = UINT32_MAX - carry;
-            carry = true;
-        } else {
-            first -= carry;
-            carry = false;
-        }
-    }
+    uint64_t difference = (uint64_t) first - second - carry;
+    first = (uint32_t)difference;
+    carry = ((int64_t)difference < 0);
 }
 
 void mulOverflow(uint32_t &a, uint32_t const b, uint32_t const c, uint64_t &carry) {
@@ -131,7 +110,7 @@ int compare_absolute_value(big_integer const &first, big_integer const &second) 
 }
 
 big_integer &big_integer::add(big_integer &first, big_integer const &second, bool flag) {
-    bool secondSign = second.sign ^flag;
+    bool secondSign = second.sign ^ flag;
     size_t n = std::max(first.length(), second.length());
     size_t m = std::min(first.length(), second.length());
     bool bigger = false;
@@ -139,28 +118,20 @@ big_integer &big_integer::add(big_integer &first, big_integer const &second, boo
         bigger = true;
     }
     if ((first.sign && secondSign) || (!first.sign && !secondSign)) {
-        first.v.reserve(n + 1);
-        while (first.v.size() < n + 1) {
-            first.v.push_back(0);
-        }
+        first.v.resize(n + 1, 0);
         bool carry = false;
-        for (size_t i = 0; i < n; i++) {
-            if (i < m) {
-                summOverflow(first.v[i], second.v[i], carry);
-            } else {
-                if (bigger) {
-                    summOverflow(first.v[i], 0, carry);
-                } else {
-                    summOverflow(first.v[i], second.v[i], carry);
-                }
-            }
+        for (size_t i = 0; i < m; i++) {
+            summOverflow(first.v[i], second.v[i], carry);
+        }
+        for (size_t i = m; i < n; i++) {
+            bigger ? summOverflow(first.v[i], 0, carry) : summOverflow(first.v[i], second.v[i], carry);
         }
         summOverflow(first.v[n], 0, carry);
         first.normalize();
     } else {
         int cmp = compare_absolute_value(first, second);
         bool sign;
-        big_integer ans;
+        big_integer &ans;
         big_integer &b = first;
         if (cmp == 1) {
             ans = first;
@@ -182,7 +153,6 @@ big_integer &big_integer::add(big_integer &first, big_integer const &second, boo
                 subOverflow(ans.v[i], 0, carry);
             }
         }
-
         ans.normalize();
         ans.sign = sign;
         first = ans;
@@ -242,6 +212,12 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
+    if (rhs.length() == 1) {
+        smallMul(*this, rhs.v[0]);
+        sign = sign ^ rhs.sign;
+        return *this;
+    }
+
     big_integer ans;
     size_t n = length();
     size_t m = rhs.length();
@@ -259,6 +235,21 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     return *this = ans;
 }
 
+void smallMul(big_integer &a, uint32_t b) {
+    size_t n = a.length();
+    uint64_t carry = 0;
+    for (size_t i = 0; i < n; i++) {
+        uint64_t ans = static_cast<uint64_t>(a.v[i]) * b + carry;
+        a.v[i] = static_cast<uint32_t>(ans);
+        carry = (ans >> 32u);
+    }
+    if (carry) {
+        a.v.push_back(carry);
+    }
+    a.normalize();
+}
+
+
 big_integer &big_integer::operator/=(big_integer const &rhs) {
     if (rhs == 0) {
         throw std::runtime_error("division by zero");
@@ -273,8 +264,8 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
     second.sign = false;
     uint64_t base = (1ll << 32);
     uint32_t normalize_coeff = static_cast<uint32_t>(base / (static_cast<uint64_t >(second.v.back() + 1)));
-    *this *= normalize_coeff;
-    second *= normalize_coeff;
+    smallMul(*this, normalize_coeff);
+    smallMul(second, normalize_coeff);
 
     int n = (int) second.length();
     int m = (int) length() - n;
@@ -292,7 +283,9 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
             q_star = base - 1;
         }
         result[j] = static_cast<uint32_t>(q_star);
-        *this -= result[j] * (second << (32 * j));
+        big_integer temp = (second << (32 *j));
+        smallMul(temp, result[j]);
+        *this -= temp;
         while (*this < 0) {
             --result[j];
             *this += (second << (32 * j));
@@ -512,6 +505,7 @@ uint32_t get(big_integer &a, size_t pos) {
         return a.v[pos];
     }
 }
+
 
 big_integer operator&(big_integer a, big_integer const &b) {
     return a &= b;
