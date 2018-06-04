@@ -47,15 +47,15 @@ size_t big_integer::length() const {
 }
 
 void summOverflow(uint32_t &first, uint32_t const second, bool &carry) {
-    uint64_t summ = (uint64_t)first + second + carry;
-    first = (uint32_t)summ;
+    uint64_t summ = (uint64_t) first + second + carry;
+    first = (uint32_t) summ;
     carry = summ >> 32u;
 }
 
 void subOverflow(uint32_t &first, uint32_t const second, bool &carry) {
     uint64_t difference = (uint64_t) first - second - carry;
-    first = (uint32_t)difference;
-    carry = ((int64_t)difference < 0);
+    first = (uint32_t) difference;
+    carry = ((int64_t) difference < 0);
 }
 
 void mulOverflow(uint32_t &a, uint32_t const b, uint32_t const c, uint64_t &carry) {
@@ -110,7 +110,7 @@ int compare_absolute_value(big_integer const &first, big_integer const &second) 
 }
 
 big_integer &big_integer::add(big_integer &first, big_integer const &second, bool flag) {
-    bool secondSign = second.sign ^ flag;
+    bool secondSign = second.sign ^flag;
     size_t n = std::max(first.length(), second.length());
     size_t m = std::min(first.length(), second.length());
     bool bigger = false;
@@ -131,7 +131,7 @@ big_integer &big_integer::add(big_integer &first, big_integer const &second, boo
     } else {
         int cmp = compare_absolute_value(first, second);
         bool sign;
-        big_integer &ans;
+        big_integer ans;
         big_integer &b = first;
         if (cmp == 1) {
             ans = first;
@@ -283,7 +283,7 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
             q_star = base - 1;
         }
         result[j] = static_cast<uint32_t>(q_star);
-        big_integer temp = (second << (32 *j));
+        big_integer temp = (second << (32 * j));
         smallMul(temp, result[j]);
         *this -= temp;
         while (*this < 0) {
@@ -417,7 +417,7 @@ big_integer &big_integer::operator<<=(int rhs) {
         v[0] = v[0] << rhs;
     }
 
-    this->normalize();
+    normalize();
     return *this;
 }
 
@@ -448,7 +448,7 @@ big_integer &big_integer::operator>>=(int rhs) {
         *this = addition(*this + 1);
     }
 
-    this->normalize();
+    normalize();
     if (sign) {
         v[v.size() - 1] <<= rhs;
         v[v.size() - 1] >>= rhs;
