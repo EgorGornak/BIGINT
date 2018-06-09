@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include "big_integer.h"
+#include <my_vector.h>
 
 class big_integer {
 public:
@@ -48,7 +49,7 @@ public:
     friend std::string to_string(big_integer const &a);
 private:
     bool sign;
-    std::vector<uint32_t> v;
+    my_vector v;
 
     size_t length() const;
     void normalize();

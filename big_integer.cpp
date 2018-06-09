@@ -269,10 +269,12 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
 
     int n = (int) second.length();
     int m = (int) length() - n;
-    std::vector<uint32_t> result;
+    my_vector result;
     result.resize(m + 1, 0);
 
-    if (*this >= (second << (32 * m))) {
+    big_integer tmp = second << (32 * m);
+
+    if (*this >= tmp) {
         result[m] = 1;
         *this -= second << (32 * m);
     }
@@ -402,10 +404,12 @@ big_integer big_integer::operator~() const {
 }
 
 big_integer &big_integer::operator<<=(int rhs) {
-    unsigned long zeroBlocks = rhs / 32;
-    std::vector<uint32_t> blocks(zeroBlocks);
+    uint32_t zeroBlocks = rhs / 32;
+    my_vector blocks(zeroBlocks);
     blocks.reserve(blocks.size() + v.size());
-    blocks.insert(blocks.end(), v.begin(), v.end());
+    for (size_t i = 0; i < v.size(); i++) {
+        blocks.push_back(v[i]);
+    }
     v = blocks;
     rhs %= 32;
     if (rhs) {
